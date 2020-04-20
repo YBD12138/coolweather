@@ -5,7 +5,8 @@ import org.litepal.crud.LitePalSupport;
 public class Province extends LitePalSupport {
     private int id;
     private String provinceName;//省名字
-    private int provinceCode;//省代号
+    private int provinceCode;//省代号-----自己加的
+    private String pyName;//省英文名
 
     public void setId(int id) {
         this.id = id;
@@ -13,6 +14,14 @@ public class Province extends LitePalSupport {
 
     public int getId() {
         return id;
+    }
+
+    public String getPyName() {
+        return pyName;
+    }
+
+    public void setPyName(String pyName) {
+        this.pyName = pyName;
     }
 
     public int getProvinceCode() {

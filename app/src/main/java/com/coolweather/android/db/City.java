@@ -7,13 +7,21 @@ public class City extends LitePalSupport {
     private String cityName;//市名字
     private int cityCode;//市代号
     private int provinceId;//所属省的ID
-
+    private String pyName;//市英文名
     public int getId() {
         return id;
     }
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public void setPyName(String pyName) {
+        this.pyName = pyName;
+    }
+
+    public String getPyName() {
+        return pyName;
     }
 
     public int getCityCode() {
