@@ -1,6 +1,7 @@
 package com.coolweather.android;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,6 +34,9 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
+/**
+ * 重要！！！！！！解析地址的时候，头名一定得是https!!没有s的自己加一个~~~~
+ */
 public class ChooseAreaFragment  extends Fragment {
     public static final int LEVEL_PROVINCE = 0;
     public static final int LEVEL_CITY = 1;
@@ -77,6 +81,7 @@ public class ChooseAreaFragment  extends Fragment {
         titleText = (TextView)view.findViewById(R.id.title_text);
         backButton = (Button)view.findViewById(R.id.back_button);
         listView = (ListView)view.findViewById(R.id.list_view);
+        //初始化适配器并设置到LIST控件上
         adapter = new ArrayAdapter<>(getContext(),android.R.layout.simple_list_item_1,dataList);
         listView.setAdapter(adapter);
         Log.d(TAG, "onCreateView: create");
@@ -84,24 +89,31 @@ public class ChooseAreaFragment  extends Fragment {
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {//选中状态
         super.onActivityCreated(savedInstanceState);
         Log.d(TAG, "onActivityCreated: ");
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(currentLevel==LEVEL_PROVINCE){
+                if(currentLevel==LEVEL_PROVINCE){//选中省级
                     selectedProvince = provinceList.get(position+1);
                     Log.d(TAG, "onItemClick: 1");
                     queryCities();
                 }
-                else if(currentLevel == LEVEL_CITY){
+                else if(currentLevel == LEVEL_CITY){//选中市级
                     selectedCity = cityList.get(position+1);
                     queryCounties();
                 }
+                else if(currentLevel == LEVEL_COUNTY) {//选中区县级
+                    String weatherId = countyList.get(position+1).getUrl();
+                    Intent intent = new Intent(getActivity(),WeatherActivity.class);
+                    intent.putExtra("weather_id",weatherId);
+                    startActivity(intent);
+                    getActivity().finish();
+                }
             }
         });
-        backButton.setOnClickListener(new View.OnClickListener() {
+        backButton.setOnClickListener(new View.OnClickListener() {//后退键
             @Override
             public void onClick(View v) {
                 if(currentLevel==LEVEL_COUNTY)
@@ -110,7 +122,7 @@ public class ChooseAreaFragment  extends Fragment {
                     queryProvinces();
             }
         });
-            queryProvinces();
+            queryProvinces();//初始化省级列表
     }
     /**
      * 查询全国所有的省，优先从数据库查询，如果没有查询到再去服务器上查询
@@ -121,14 +133,14 @@ public class ChooseAreaFragment  extends Fragment {
 
         backButton.setVisibility(View.GONE);
 
-        provinceList = LitePal.findAll(Province.class);
+        provinceList = LitePal.findAll(Province.class);//查找数据库
 
 
         if(provinceList.size()>0){
 
             dataList.clear();//清空当前LIST列表内容
             for(Province province:provinceList){
-                if(province.getProvinceName()!=null){
+                if(province.getProvinceName()!=null){//为空值不添加
                     dataList.add(province.getProvinceName());
                 }
             }
@@ -149,17 +161,17 @@ public class ChooseAreaFragment  extends Fragment {
      */
     private void queryCities(){
         Log.d(TAG, "queryCities: 2");
-        titleText.setText(selectedProvince.getProvinceName());
+        titleText.setText(selectedProvince.getProvinceName());//设置标题
         Log.d(TAG, "queryCities: 3"+selectedProvince.getProvinceName());
         backButton.setVisibility(View.VISIBLE);
         cityList = LitePal.where("provinceId=?",
-                String.valueOf(selectedProvince.getId())).find(City.class);
+                String.valueOf(selectedProvince.getId())).find(City.class);//查找到省ID下级城市
         Log.d(TAG, "name"+selectedProvince.getProvinceCode());
         if(cityList.size()>0){
             Log.d(TAG, "queryCities: 4");
             dataList.clear();//清空当前LIST列表内容
             for(City city:cityList){
-                if(city.getCityName()!=null){
+                if(city.getCityName()!=null){//为空不添加
                     dataList.add(city.getCityName());
                     Log.d(TAG, "queryCities: "+city.getCityName());
                 }
@@ -180,15 +192,15 @@ public class ChooseAreaFragment  extends Fragment {
      */
     private void queryCounties(){
         titleText.setText(selectedCity.getCityName());
-        Log.d(TAG, "queryCounties: "+selectedCity.getCityName());
+        Log.d(TAG, "queryCounties: "+selectedCity.getCityName());//设置标题名
         backButton.setVisibility(View.VISIBLE);
         countyList = LitePal.where("cityId=?"
-                ,String.valueOf(selectedCity.getId())).find(County.class);
+                ,String.valueOf(selectedCity.getId())).find(County.class);//查找市ID下级区县
         if(countyList.size()>0){
             Log.d(TAG, "queryCounties: 有数据");
             dataList.clear();//清空当前LIST列表内容
             for(County county:countyList){
-                if(county.getCountName()!=null)
+                if(county.getCountName()!=null)//为空不添加
                 {
                     dataList.add(county.getCountName());
                     Log.d(TAG, "URL: "+county.getUrl());
@@ -208,12 +220,13 @@ public class ChooseAreaFragment  extends Fragment {
      */
     private void queryFromServer(String address,final String type){
         showProgressDialog();
-        HttpUtil.sendOkHttpRequest(address, new Callback() {
+        HttpUtil.sendOkHttpRequest(address, new Callback() {//发出网络请求
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(Call call, Response response) throws IOException {//成功返回值
                 Log.d(TAG, "onResponse: 成功");
-                String responseText = response.body().string();
+                String responseText = response.body().string();//转换成字符类型
                 boolean result = false;
+                //匹配以下三种方法，解析省市县
                 if("province".equals(type)){
                     result = Utility.handleProvinceResponse(responseText);
                 }else if("city".equals(type)){
@@ -223,7 +236,7 @@ public class ChooseAreaFragment  extends Fragment {
                     result = Utility.handCountyResponse(responseText,selectedCity.getId());
                 }
                 if(result){
-                    getActivity().runOnUiThread(new Runnable() {
+                    getActivity().runOnUiThread(new Runnable() {//返回主线程,根据匹配重新刷新列表
                         @Override
                         public void run() {
                             closeProgressDialog();
@@ -239,7 +252,7 @@ public class ChooseAreaFragment  extends Fragment {
                 }
             }
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(Call call, IOException e) {//请求失败
                 Log.d(TAG, "onFailure: 失败");
                 //通过runOnUiThread()方法回到主线程处理逻辑
                 getActivity().runOnUiThread(new Runnable() {
@@ -258,7 +271,7 @@ public class ChooseAreaFragment  extends Fragment {
     /**
      * 显示进度对话框
      */
-    private void showProgressDialog(){
+    private void showProgressDialog(){//加载框
         if(progressDialog==null){
             progressDialog = new ProgressDialog(getActivity());
             progressDialog.setMessage("正在加载……");

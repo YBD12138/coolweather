@@ -8,6 +8,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+/**
+ * 解析XML之后存到数据库中
+ */
 public class ProvinceHandler extends DefaultHandler {
     Province province=null;
     private String pyName;

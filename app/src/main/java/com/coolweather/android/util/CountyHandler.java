@@ -9,6 +9,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+/**
+ * 解析XML之后存到数据库中
+ */
 public class CountyHandler extends DefaultHandler {
     County county=null;
     private String url;
@@ -28,7 +31,7 @@ public class CountyHandler extends DefaultHandler {
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
         county = new County();
         JK=0;
-        Log.d(TAG, "localName: "+localName+"\t\tqName:"+qName);
+        //Log.d(TAG, "localName: "+localName+"\t\tqName:"+qName);
         for ( int i = 0; i < attributes.getLength(); i++ ) {
             switch (attributes.getLocalName(i)){
                 case "cityname":

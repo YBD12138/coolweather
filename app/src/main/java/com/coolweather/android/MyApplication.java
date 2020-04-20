@@ -10,8 +10,8 @@ public class MyApplication extends Application {
 
     @Override
     public void onCreate() {
-        LitePal.initialize(getContext());
         context = getApplicationContext();
+        LitePal.initialize(context);
         super.onCreate();
     }
     public static Context getContext(){

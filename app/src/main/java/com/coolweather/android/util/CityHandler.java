@@ -10,6 +10,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+/**
+ * 解析XML之后存到数据库中
+ */
 public class CityHandler extends DefaultHandler {
     City city=null;
     private String pyName;
@@ -29,7 +32,7 @@ public class CityHandler extends DefaultHandler {
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
         city = new City();
         JK=0;
-        Log.d(TAG, "localName: "+localName+"\t\tqName:"+qName);
+        //Log.d(TAG, "localName: "+localName+"\t\tqName:"+qName);
         for ( int i = 0; i < attributes.getLength(); i++ ) {
             switch (attributes.getLocalName(i)){
                 case "cityname":
